@@ -47,14 +47,17 @@ AIがコード、設計、レビュー、リファクタリングを実施する
 ---
 
 # 標準一覧
+Before generating code, review:
+- docs/naming-conventions.md
+- docs/power_apps_canvas_app_dev_standard.md
 
 ## 命名規則
 
-- naming-conventions.md
+- docs/naming-conventions.md
 
 ## 開発標準
 
-- power_apps_canvas_app_dev_standard.md
+- docs/power_apps_canvas_app_dev_standard.md
 
 ## SharePoint利用標準
 
