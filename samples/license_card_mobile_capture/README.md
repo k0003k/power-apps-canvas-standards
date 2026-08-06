@@ -1,2 +1,0 @@
-# license_card_mobile_capture
-レイアウト実装の参考
