@@ -30,9 +30,9 @@
 
 | 種別 | 接頭語 | 例 |
 |---|---|---|
-| 機能単体 | `FUT` | `FUT-SCR-REQUEST-001` |
-| 機能間結合 | `FIT` | `FIT-REQUEST-ENTRY-HISTORY-001` |
-| システム | `ST` | `ST-REQUEST-SUBMIT-001` |
+| 機能単体 | `FUT` | `FUT-UI001-01-001` |
+| 機能間結合 | `FIT` | `FIT-DF001-001` |
+| システム | `ST` | `ST-UC001-001` |
 
 IDは一度発行した後に再利用しない。
 
@@ -134,17 +134,17 @@ expected_results:
 ## 8. テンプレート
 
 ```yaml
-test_case_id: FUT-SCR-REQUEST-001
+test_case_id: FUT-UI001-01-001
 title: 必須項目を入力して申請を登録できる
 test_level: functional_unit
 target_feature_ids:
-  - SCR-REQUEST-ENTRY
+  - UI001-01
 requirement_ids:
-  - REQ-001
+  - REQ001
 use_case_ids:
-  - UC-REQUEST-SUBMIT
+  - UC001
 data_flow_ids:
-  - DF-REQUEST-ENTRY-TO-LIST
+  - DF001
 objective: 申請入力画面がSharePointへの登録責務を完結できることを確認する
 design_technique:
   - equivalence_partitioning
