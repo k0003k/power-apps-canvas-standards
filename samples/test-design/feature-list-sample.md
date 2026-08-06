@@ -6,7 +6,7 @@
 
 | 機能種別 | 接頭語 | ID例 | 補足 |
 |---|---|---|---|
-| アプリ / UI | `UI` | `UI001` | 1キャンバスアプリを表す |
+| アプリ / UI | `UI` | `UI001` | 1キャンバスアプリを表す親管理単位 |
 | 画面 | 親UI ID + 子番号 | `UI001-01` | `UI001`配下の1 Screenオブジェクト |
 | インターフェース | `IF` | `IF001` | 外部システムとの1送受信機能。実装技術は問わない |
 | バッチ | `BT` | `BT001` | 定期・一括・非同期で実行する1処理。実装技術は問わない |
@@ -16,10 +16,6 @@
 
 画面の子番号は、文字列順でも正しく並ぶように2桁以上でゼロ埋めする。
 
-`UI001`はアプリ全体を表す親管理単位であり、画面の機能単体テスト対象は原則として`UI001-01`以下のScreen機能とする。
-
-`IF`と`BT`は実装技術ではなく責務で分類する。Azure FunctionsまたはPower Automateのいずれで実装されていても、外部システムとの送受信が主目的なら`IF`、定期・一括・非同期処理が主目的なら`BT`とする。
-
 ```text
 UI001
 ├─ UI001-01 申請入力画面
@@ -27,32 +23,47 @@ UI001
 └─ UI001-03 申請詳細画面
 ```
 
-`UI001-1`ではなく、原則として`UI001-01`を使用する。
+`UI001`はアプリ全体を表す親管理単位であり、画面の機能単体テスト対象は、原則として`UI001-01`以下のScreen機能とする。
+
+`IF`と`BT`は実装技術ではなく責務で分類する。
+
+- 外部システムとの送受信が主目的：`IF`
+- 定期、スケジュール、一括または非同期処理が主目的：`BT`
+
+---
 
 ## 2. 機能一覧
 
-| 機能ID | 親機能ID | 機能名 | 機能種別 | 実装資産名 | 主な入力 | 主な出力 | SharePoint / 外部接続 | 関連ユースケース | 備考 |
-|---|---|---|---|---|---|---|---|---|---|
-| `UI001` | － | 申請管理アプリ | アプリ | `RequestManagementApp` | サインインユーザー、申請情報 | 申請登録、履歴表示 | `sp_requests` | `UC-REQUEST-SUBMIT`, `UC-REQUEST-VIEW` | 親UI機能 |
-| `UI001-01` | `UI001` | 申請入力画面 | 画面 | `scr_request_entry` | 申請内容 | 申請レコード | `sp_requests` | `UC-REQUEST-SUBMIT` | 1 Screen |
-| `UI001-02` | `UI001` | 申請履歴画面 | 画面 | `scr_request_history` | サインインユーザー | 申請一覧 | `sp_requests` | `UC-REQUEST-VIEW` | 1 Screen |
-| `UI001-03` | `UI001` | 申請詳細画面 | 画面 | `scr_request_detail` | 申請ID | 申請詳細 | `sp_requests` | `UC-REQUEST-VIEW` | 1 Screen |
-| `IF001` | － | 外部申請送信API | インターフェース | `SendRequest` | 申請メッセージ | 受付結果 | 外部申請API | `UC-REQUEST-SUBMIT` | 1 Azure Functions関数 |
-| `IF002` | － | 外部結果受信API | インターフェース | `ReceiveResult` | 結果メッセージ | 申請状態更新 | 外部申請API、`sp_requests` | `UC-REQUEST-VIEW` | 1 Azure Functions関数 |
-| `BT001` | － | 申請登録フロー | バッチ | `flow_submit_request` | 申請情報 | SharePoint登録、通知 | `sp_requests` | `UC-REQUEST-SUBMIT` | 子フローを含む |
-| `RP001` | － | 申請一覧帳票 | レポート | `request_list_report` | 期間、状態 | 申請一覧 | `sp_requests` | `UC-REQUEST-REPORT` | 1帳票 |
-| `CM001` | － | 申請入力検証 | 共通 | `fn_validate_request` | 申請情報 | 検証結果 | なし | `UC-REQUEST-SUBMIT` | 1公開UDF |
-| `MG001` | － | 申請データ移行 | データ移行 | `request_migration_app` | 旧申請データ | `sp_requests` | `sp_requests` | `UC-DATA-MIGRATION` | 1移行先 |
+| 機能ID | 親機能ID | 機能名 | 機能種別 | 実装資産名 | 主な入力 | 主な出力 | SharePoint | 外部接続先 | 呼出し元 | 呼出し先 | 関連ユースケース | 所有者 | 状態 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| `UI001` | － | 申請管理アプリ | アプリ / UI | `RequestManagementApp` | サインインユーザー | 申請業務機能 | `sp_requests` | なし | 利用者 | `UI001-01`, `UI001-02`, `UI001-03` | `UC001`, `UC002`, `UC004` | application-team | 利用中 |
+| `UI001-01` | `UI001` | 申請入力画面 | 画面 | `scr_request_entry` | 申請内容 | 申請登録要求 | `sp_requests` | なし | `UI001` | `CM001`, `BT001`, `IF001` | `UC001` | application-team | 利用中 |
+| `UI001-02` | `UI001` | 申請履歴画面 | 画面 | `scr_request_history` | サインインユーザー、検索条件 | 申請一覧 | `sp_requests` | なし | `UI001` | `UI001-03` | `UC002` | application-team | 利用中 |
+| `UI001-03` | `UI001` | 申請詳細画面 | 画面 | `scr_request_detail` | 申請ID | 申請詳細 | `sp_requests` | なし | `UI001-02` | なし | `UC002` | application-team | 利用中 |
+| `UI002` | － | 承認管理アプリ | アプリ / UI | `ApprovalManagementApp` | 承認者 | 承認業務機能 | `sp_requests` | なし | 利用者 | `UI002-01` | `UC003` | approval-team | 利用中 |
+| `UI002-01` | `UI002` | 申請承認画面 | 画面 | `scr_request_approval` | 申請ID、承認内容 | 承認結果 | `sp_requests` | なし | `UI002` | `BT002` | `UC003` | approval-team | 利用中 |
+| `IF001` | － | 外部申請送信 | インターフェース | `SendRequest` | 申請メッセージ | 外部受付結果 | なし | 外部申請API | `UI001-01` | 外部申請システム | `UC001` | integration-team | 利用中 |
+| `IF002` | － | 外部結果受信 | インターフェース | `ReceiveResult` | 外部処理結果 | 申請状態更新 | `sp_requests` | 外部申請API | 外部申請システム | `UI001-02` | `UC002` | integration-team | 利用中 |
+| `BT001` | － | 申請登録処理 | バッチ | `flow_submit_request` | 申請情報 | SharePoint登録、通知 | `sp_requests` | 通知サービス | `UI001-01` | `UI001-02`, `IF001` | `UC001` | application-team | 利用中 |
+| `BT002` | － | 滞留申請確認 | バッチ | `flow_check_pending_requests` | 滞留申請 | 承認者通知 | `sp_requests` | 通知サービス | スケジュール | `UI002-01` | `UC003` | approval-team | 利用中 |
+| `RP001` | － | 申請一覧帳票 | レポート | `request_list_report` | 期間、申請状態 | 申請一覧帳票 | `sp_requests` | なし | `UI001` | なし | `UC004` | reporting-team | 利用中 |
+| `CM001` | － | 申請入力検証 | 共通 | `fn_validate_request` | 申請情報 | 検証結果 | なし | なし | `UI001-01` | なし | `UC001` | application-team | 利用中 |
+| `MG001` | － | 申請データ移行 | データ移行 | `request_migration_app` | 旧申請データ | 移行済み申請 | `sp_requests` | 旧申請データソース | 移行担当者 | `UI001-02`, `RP001` | `UC005` | migration-team | 計画中 |
+
+---
 
 ## 3. 作成ルール
 
 - 機能一覧を、データフロー対応表、ビジネスファンクションチャート、テストケースより先に作成する
 - すべての機能に一意な機能IDを付与する
 - 画面機能は親アプリIDを継承する
-- IDは意味を持たせすぎず、名称変更時にも原則として維持する
+- IDは名称変更時にも原則として維持する
 - 廃止したIDを別機能へ再利用しない
 - 機能追加・削除・責務変更時は、同一Pull Requestで機能一覧を更新する
-- データフロー、ユースケース、テストケースは必ず機能一覧のIDを参照する
+- データフロー、ユースケース、テストケースは、必ず機能一覧のIDを参照する
+- 値が存在しない必須項目には、空欄ではなく`なし`または`－`を明記する
+
+---
 
 ## 4. AI利用時の扱い
 
