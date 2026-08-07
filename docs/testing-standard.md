@@ -100,9 +100,9 @@ AIによる自動テストでは、変更内容、データフロー、ユース
 
 ## 3. 機能一覧と1機能の定義
 
-### 3.1 機能一覧を先に作成する
+### 3.1 Test Specification作成前に機能一覧を確定する
 
-テスト仕様書を作成する前に、[`test-traceability-standard.md`](./test-traceability-standard.md)に従って機能一覧を作成する。
+Test Specificationを作成する前に、[`test-traceability-standard.md`](./test-traceability-standard.md)に従ってBFC及び機能一覧を確定する。
 
 機能単体テスト、機能間結合テスト、システムテストは、機能一覧で採番した機能IDを参照する。
 
