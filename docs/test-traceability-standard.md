@@ -1,10 +1,11 @@
 # Power Apps テスト・トレーサビリティ標準
 
-作成日：2026-08-06  \n改訂日：2026-08-06（機能一覧、ID体系、成果物間参照を統一）
+作成日：2026-08-06  
+改訂日：2026-08-07（Test Specification / Test Caseの二階層化とTest Specification単位のトレーサビリティを反映）
 
 ## 0. 目的
 
-本標準は、要件、ユースケース、機能、データフロー、SharePointスキーマ、テストケースおよび変更差分の関係を、AIと人間が追跡できる状態にするための成果物と管理方法を定める。
+本標準は、要件、ユースケース、機能、データフロー、SharePointスキーマ、Test Specification、Test Caseおよび変更差分の関係を、AIと人間が追跡できる状態にするための成果物と管理方法を定める。
 
 以下を必須成果物とし、原則として記載順に作成する。
 
@@ -12,9 +13,11 @@
 2. データフロー対応表
 3. ビジネスファンクションチャート（ユースケース・機能対応表）
 4. ユースケース間依存関係表
-5. 要件・機能・テスト対応表
+5. 要件・機能・Test Specification対応表
 
 後続成果物は、前段の成果物で採番したIDを参照する。
+
+Test SpecificationとTest Caseの具体的なYAML形式は、[`test-case-schema.md`](./test-case-schema.md)に従う。
 
 ---
 
@@ -44,6 +47,17 @@
 | レポート | `RP001` |
 | 共通 | `CM001` |
 | データ移行 | `MG001` |
+| 機能単体Test Specification | `FUT-UI001-01-001` |
+| 機能間結合Test Specification | `FIT-DF001-001` |
+| システムTest Specification | `ST-UC001-001` |
+| Test Case | `C001` |
+| 実行ケースID | `FUT-UI001-01-001-C001` |
+
+`FUT` / `FIT` / `ST` 形式のIDは、要件や機能から直接追跡するTest SpecificationのIDとする。
+
+Test CaseはTest Specification配下の具体的なデータ・入力・期待結果パターンであり、`C001`形式で採番する。
+
+実行結果、証跡、Playwrightテスト名等で一意に識別する場合は、`<test_spec_id>-<case_id>` を使用する。
 
 ---
 
@@ -51,9 +65,9 @@
 
 ### 2.1 目的
 
-機能一覧を、データフロー、ビジネスファンクションチャート、テストケースおよび変更影響分析の起点とする。
+機能一覧を、データフロー、ビジネスファンクションチャート、Test Specificationおよび変更影響分析の起点とする。
 
-画面、フロー、Azure Functions、帳票、移行処理、共通処理等を追加した場合は、他の設計成果物やテストケースを作成する前に機能一覧へ登録する。
+画面、フロー、Azure Functions、帳票、移行処理、共通処理等を追加した場合は、他の設計成果物やテスト仕様を作成する前に機能一覧へ登録する。
 
 ### 2.2 機能ID体系
 
@@ -160,11 +174,13 @@ UI001-01 → IF001 → 外部システム
 | トリガー | 手動、登録、スケジュール、API等 |
 | 正常時の状態 | 保存・送信・表示結果 |
 | 異常時の状態 | エラー、再実行、残存データ等 |
-| 関連結合テスト | `FIT-DF001-001`形式のテストケースID |
+| 関連結合テスト仕様 | `FIT-DF001-001`形式の `test_spec_id` |
 
 サンプル：
 
 - [データフロー対応表サンプル](../samples/test-design/data-flow-test-matrix-sample.md)
+
+既存サンプルや表で列名を「関連結合テスト」と表記していても、値 `FIT-DFxxx-xxx` はTest Specification IDとして解釈する。
 
 ---
 
@@ -195,13 +211,15 @@ UC003
 | 入力データ | 前提となるデータ |
 | 出力データ・状態 | 作成・更新するデータや状態 |
 | 関連データフローID | 当該ユースケースが利用するデータフロー |
-| 関連システムテスト | `ST-UC001-001`形式のテストケースID |
+| 関連システムテスト仕様 | `ST-UC001-001`形式の `test_spec_id` |
 
 ビジネスファンクションチャートは、単なる画面一覧ではなく、利用者の業務目的と機能の対応を表す。
 
 サンプル：
 
 - [ビジネスファンクションチャートサンプル](../samples/test-design/business-function-chart-sample.md)
+
+既存サンプルや表で列名を「関連システムテスト」と表記していても、値 `ST-UCxxx-xxx` はTest Specification IDとして解釈する。
 
 ---
 
@@ -226,7 +244,7 @@ UC003
 
 ---
 
-## 6. 要件・機能・テスト対応表
+## 6. 要件・機能・Test Specification対応表
 
 ### 6.1 要件ID
 
@@ -238,9 +256,29 @@ REQ002
 REQ003
 ```
 
-### 6.2 対応表
+### 6.2 トレーサビリティの粒度
 
-承認済み要件から、ユースケース、実装機能、SharePoint、データフローおよびテストケースを追跡できる状態にする。
+要件、ユースケース、機能、データフローから直接追跡する単位は、原則としてTest Specificationとする。
+
+Test CaseはTest Specificationの配下で、具体的な `test_data × input_data → expected_result` のパターンとして追跡する。
+
+```text
+REQ001
+  ↓
+FUT-UI001-01-001
+  ├─ C001
+  ├─ C002
+  ├─ C003
+  └─ C004
+```
+
+要件対応表へすべてのCase IDを重複記載することは必須としない。
+
+個別Caseの追跡が必要な場合は、`test_spec_id` と `case_id` から実行ケースIDを生成する。
+
+### 6.3 対応表
+
+承認済み要件から、ユースケース、実装機能、SharePoint、データフローおよびTest Specificationを追跡できる状態にする。
 
 ```yaml
 requirements:
@@ -257,7 +295,7 @@ requirements:
     data_flows:
       - DF001
       - DF002
-    tests:
+    test_specs:
       - FUT-UI001-01-001
       - FUT-BT001-001
       - FUT-CM001-001
@@ -265,6 +303,33 @@ requirements:
       - FIT-DF002-001
       - ST-UC001-001
 ```
+
+### 6.4 Test SpecificationからTest Caseへの追跡
+
+Test Specification YAML内で、各Caseを一意に管理する。
+
+```yaml
+test_spec_id: FUT-UI001-01-001
+
+cases:
+  - case_id: C001
+    test_data_refs:
+      - TD001
+    input_data_refs:
+      - IN001
+    expected_result:
+      result: accepted
+
+  - case_id: C002
+    test_data_refs:
+      - TD002
+    input_data_refs:
+      - IN001
+    expected_result:
+      result: rejected
+```
+
+これにより、要件・機能からはTest Specification単位で簡潔に追跡し、具体的な入力パターンと期待結果はTest Specification内で詳細に追跡する。
 
 ---
 
@@ -283,6 +348,8 @@ AIは、Git差分および本標準の対応表から、以下を影響範囲候
 - 変更されたSharePointリスト・列
 - 変更されたレポート
 - 変更された機能一覧の項目
+- 変更されたTest Specification
+- 変更されたTest Case
 
 ### 7.2 呼出し関係
 
@@ -297,14 +364,26 @@ AIは、Git差分および本標準の対応表から、以下を影響範囲候
 - 変更したSharePointリストを読み書きする全機能
 - 変更した列を利用する画面、帳票、IF、BT
 - 同一データフロー経路に属する機能
-- 関連する機能間結合テスト
+- 関連する機能間結合Test Specification
 
 ### 7.4 ユースケース関係
 
 - 変更機能を利用するユースケース
 - 当該ユースケースの前提ユースケース
 - 当該ユースケースの出力を利用する後続ユースケース
-- 関連するシステムテスト
+- 関連するシステムTest Specification
+
+### 7.5 テストデータ・入力データ・期待結果の変更
+
+以下の変更もテスト影響として扱う。
+
+- `test_data` の追加・削除・状態変更
+- `input_data` の同値クラス・境界値変更
+- 個別条件・判定式の変更
+- MC/DCペアの変更
+- `expected_result` の変更
+- Case追加・削除
+- Test Specificationの対象機能・要件・DF・UC変更
 
 AIは影響候補を抽出するが、影響なしと判断した項目についても理由を記録する。
 
@@ -320,6 +399,35 @@ AIは影響候補を抽出するが、影響なしと判断した項目につい
 - 画面間・機能間のデータフロー変更
 - IFまたはBTの入出力変更
 - ユースケース変更
-- テストケース追加・削除・期待結果変更
+- Test Specification追加・削除・対象変更
+- Test Case追加・削除
+- `test_data` / `input_data` / `expected_result`変更
+- MC/DC対象条件またはカバレッジ変更
 
 対応表が更新されていない変更は、レビュー未完了として扱う。
+
+Test Caseだけの追加・削除で、親Test Specificationが同じ要件・機能・DF・UCを参照し続ける場合、要件・機能・Test Specification対応表の変更は必須としない。ただしTest Specification YAML自体は同一Pull Requestで更新する。
+
+---
+
+## 9. AIによる参照順序
+
+AIが変更影響分析またはテスト生成を行う場合は、原則として以下の順序で参照する。
+
+```text
+機能一覧
+  ↓
+データフロー対応表
+  ↓
+ビジネスファンクションチャート
+  ↓
+ユースケース間依存関係表
+  ↓
+要件・機能・Test Specification対応表
+  ↓
+Test Specification YAML
+  ↓
+Test Case
+```
+
+AIは、途中の成果物が存在しない場合に推測で関係を確定せず、不足成果物として報告する。
