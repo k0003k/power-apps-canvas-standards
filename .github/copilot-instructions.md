@@ -22,20 +22,33 @@ When documents conflict:
 
 ## Required Artifact Order
 
-For test design and impact analysis, create or confirm artifacts in this order:
+For new design or test design that starts from business requirements, create or confirm artifacts in this order:
 
-1. Feature list
-2. Data-flow matrix
-3. Business function chart
-4. Use-case dependency table
-5. Test specifications
-6. Executable test scripts, when automation is selected
+1. Approved business requirements
+2. Initial Business Function Chart (BFC)
+3. Use-case dependency table
+4. Feature list
+5. Updated BFC with formal feature IDs
+6. Data-flow matrix
+7. Test Specifications
+8. Test Cases inside each Test Specification
+9. Executable test scripts, when automation is selected
 
-All later artifacts must reference IDs defined in the feature list or the relevant preceding artifact.
+The initial BFC is an upstream business-analysis artifact. Use it to identify who performs each business action, when it occurs, what the business requirement is, and what system capability is needed.
+
+Do not prematurely finalize feature placement, commonization, splitting, merging, or implementation technology in the initial BFC unless those decisions are already approved.
+
+The feature list is the source of truth for formal system feature IDs and responsibilities. After formal features are defined, update the BFC to link its business requirements and use cases to those feature IDs.
+
+One Business Requirement may require multiple BFC candidate functions. Treat this as a business-requirement-to-candidate-function one-to-many relationship.
+
+Separately, a BFC candidate function does not have to map one-to-one to a formal feature. Formal design may merge, split, commonize, or relocate responsibilities.
+
+If detailed feature design changes the formal feature structure, update the feature list first and then feed the result back into the BFC before updating downstream data flows and tests.
 
 If an implementation asset is not registered in the feature list, report it as an unregistered feature. Do not guess or reuse another feature ID.
 
-Do not generate executable test scripts directly from implementation code when an approved test specification is required. Create or update the test specification first, then generate the executable test from it.
+Do not generate executable test scripts directly from implementation code when an approved Test Specification is required. Create or update the Test Specification first, then generate the executable test from it.
 
 ## Identifier Rules
 
@@ -75,6 +88,43 @@ When an executable test, log entry, report, or evidence item requires a globally
 - `ST-UC001-001-C001`
 
 Do not reuse retired IDs.
+
+
+## Business Function Chart (BFC)
+
+Treat the BFC as an upstream business-analysis artifact, not as a copy of the final feature list.
+
+For each business activity, identify:
+
+- business category
+- related requirement ID
+- use-case ID
+- actor or subject
+- timing
+- business requirement or action
+- required system capability or candidate function
+
+Humans and system processing may both appear as actors or subjects in the business flow.
+
+In the initial BFC:
+
+- one Business Requirement may map to multiple system candidate functions
+- do not force one Business Requirement into one candidate function when multiple system behaviors are required
+- formal feature IDs may be unassigned
+- feature categories may be provisional
+- implementation technology may be unknown
+- do not invent common functions only because code reuse seems possible
+- do not force candidate functions into one-to-one formal feature units
+
+After the feature list is established:
+
+- link the BFC to the formal feature IDs
+- keep Business Requirement -> BFC candidate functions and BFC candidate functions -> formal features as separate relationships
+- allow one BFC candidate to map to multiple formal features
+- allow multiple BFC candidates to map to one formal feature
+- include newly extracted common functions where they implement the business requirement
+
+If detailed design later changes feature boundaries or responsibilities, update both the feature list and BFC so the approved business requirement remains traceable to the final implementation.
 
 ## Development Requirements
 
@@ -196,7 +246,7 @@ Treat functional-unit, integration, and system tests as assurance classification
 
 - A Screen functional-unit test includes actual writes to the approved development or test SharePoint list when the Screen owns that responsibility.
 - Generate integration tests from actual data-flow paths, not from a Cartesian product of functions.
-- Use the business function chart and use-case dependency table for system-test impact analysis.
+- Use the updated BFC and use-case dependency table for system-test impact analysis. Use the feature list as the source of truth for formal feature IDs.
 - Select regression tests from direct changes, callers/callees, data-flow paths, shared datastore fields, and affected use cases.
 - Determine expected results from approved requirements and designs before implementation code.
 - Do not change expected results merely to make a failing test pass.
@@ -302,12 +352,16 @@ Do not hide flaky behavior with fixed waits or retry-only changes. Record the in
 
 When implementation or specifications change, identify impact from all of the following:
 
-1. directly changed feature, code, or datastore field
-2. callers and callees
-3. related data-flow paths and shared datastore fields
-4. use cases using the changed feature
+1. directly changed business requirement, feature, code, or datastore field
+2. BFC use cases and business activities linked to the changed feature
+3. callers and callees
+4. related data-flow paths and shared datastore fields
 5. preceding or following dependent use cases
 6. Test Specifications referencing the affected items
+
+For implementation-originated change analysis, it is valid to trace backward in this order:
+
+`changed implementation -> feature list -> updated BFC -> use-case dependencies -> data flows -> Test Specifications -> Test Cases`
 
 Select regression cases based on the resulting impact rather than running unrelated combinations by default.
 
